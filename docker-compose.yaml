@@ -1,0 +1,25 @@
+services:
+  dind:
+    image: docker:24-dind
+    privileged: true
+    volumes:
+      - docker-data:/var/lib/docker
+    environment:
+      - DOCKER_TLS_CERTDIR=
+
+  node:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    tty: true
+    working_dir: /app
+    ports:
+      - 3000:3000
+    environment:
+      - DOCKER_HOST=tcp://dind:2375
+    depends_on:
+      - dind
+    restart: unless-stopped
+
+volumes:
+  docker-data:
