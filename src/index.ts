@@ -6,6 +6,12 @@ const fastify = Fastify({
   logger: true
 })
 
+// Register CORS plugin
+await fastify.register(import('@fastify/cors'), {
+  origin: true, // Allow any origin
+  credentials: true
+})
+
 // Declare a route
 fastify.get('/', async function handler (request, reply) {
   return { hello: 'world' }
