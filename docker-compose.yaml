@@ -13,13 +13,19 @@ services:
       dockerfile: Dockerfile
     tty: true
     working_dir: /app
+    volumes:
+      - projects:/apps
     ports:
       - 3000:3000
     environment:
       - DOCKER_HOST=tcp://dind:2375
+      - DOCKERODE_HOST=dind 
+      - DOCKERODE_PORT=2375
+      - PROJECTS=/apps
     depends_on:
       - dind
     restart: unless-stopped
 
 volumes:
   docker-data:
+  projects:

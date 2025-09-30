@@ -2,11 +2,8 @@ import type { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import staticPlugin from'@fastify/static'
 import fs from 'fs/promises'
 import pathFs from 'path'
-import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = pathFs.dirname(__filename)
-const root = pathFs.join(__dirname, '../../')
+const root = process.env.PROJECTS || '/apps'
 
 export default async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
   fastify.register(staticPlugin, {
@@ -15,7 +12,7 @@ export default async (fastify: FastifyInstance, options: FastifyPluginOptions) =
   })
   fastify.get('/ls', async (request) => {
     const path = (request.query as {path: string }).path;
-    const files = await fs.readdir(path, { withFileTypes: true });
+    const files = await fs.readdir(pathFs.join(root, path), { withFileTypes: true });
 
     return {
       files: files.filter(file => file.isFile()).map(file => file.name),
@@ -24,7 +21,7 @@ export default async (fastify: FastifyInstance, options: FastifyPluginOptions) =
   });
   fastify.get('/read', async (request) => {
     const path = (request.query as {path: string }).path;
-    const file = await fs.readFile(path, 'utf8');
+    const file = await fs.readFile(pathFs.join(root, path), 'utf8');
     return file;
   });
   fastify.get('/get', async (request, reply) => {
@@ -36,12 +33,22 @@ export default async (fastify: FastifyInstance, options: FastifyPluginOptions) =
   });
   fastify.post('/write', async (request, reply) => {
     const { path, content } = request.body as { path: string, content: string };
-    await fs.writeFile(path, content);
+    await fs.writeFile(pathFs.join(root, path), content);
     return { success: true };
   });
   fastify.post('/delete', async (request, reply) => {
     const { path } = request.body as { path: string };
-    await fs.unlink(path);
+    await fs.unlink(pathFs.join(root, path));
+    return { success: true };
+  });
+  fastify.post('/rename', async (request, reply) => {
+    const { from, to } = request.body as { from: string, to: string };
+    await fs.rename(pathFs.join(root, from), pathFs.join(root, to));
+    return { success: true };
+  });
+  fastify.post('/mkdir', async (request, reply) => {
+    const { path } = request.body as { path: string };
+    await fs.mkdir(pathFs.join(root, path), { recursive: true });
     return { success: true };
   });
 }
